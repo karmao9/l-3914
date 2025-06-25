@@ -2,7 +2,6 @@
 import { useEffect, useState } from 'react';
 import Header from '@/components/Header';
 import Terminal from '@/components/Terminal';
-import EmailForm from '@/components/EmailForm';
 import FeatureCard from '@/components/FeatureCard';
 import { GraduationCap, Brain, Target } from 'lucide-react';
 
@@ -33,8 +32,6 @@ const Index = () => {
         </div>
         
         <Terminal />
-        
-        <EmailForm />
         
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto mt-16 mb-16">
           <FeatureCard 
