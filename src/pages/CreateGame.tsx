@@ -12,68 +12,18 @@ const assessmentCategories = [
   { id: 'preferences', name: 'Study Preferences', icon: <span className="text-lg">⚙️</span> },
 ];
 
-const questions = [
-  {
-    id: 'program',
-    text: 'Which Program/Course are you currently taking?',
-    category: 'education',
-    style: 'font-serif text-xl font-bold text-blue-300 border-l-4 border-blue-400 pl-4 bg-blue-900/20 rounded-r-lg py-3'
-  },
-  {
-    id: 'enjoy_subjects',
-    text: 'What subjects do you enjoy the most?',
-    category: 'education',
-    style: 'font-mono text-lg text-green-300 bg-gradient-to-r from-green-900/30 to-transparent p-3 rounded-lg border border-green-700'
-  },
-  {
-    id: 'difficult_subjects',
-    text: 'What subjects do you find most difficult or less enjoyable?',
-    category: 'education',
-    style: 'font-sans text-base italic text-yellow-300 shadow-lg bg-yellow-900/20 p-4 rounded-xl border-2 border-dashed border-yellow-600'
-  },
-  {
-    id: 'strengths',
-    text: 'What are some of your strengths or skills?',
-    category: 'skills',
-    style: 'font-bold text-lg tracking-wide text-purple-300 bg-gradient-to-br from-purple-900/40 to-pink-900/20 p-3 rounded-lg border border-purple-500 shadow-purple-500/25 shadow-lg'
-  },
-  {
-    id: 'logical_creative',
-    text: 'Do you prefer tasks that are more logical or more creative?',
-    category: 'skills',
-    style: 'font-light text-xl text-orange-300 border-t-4 border-b-4 border-orange-500 py-4 px-2 bg-orange-900/10 italic'
-  },
-  {
-    id: 'career_fields',
-    text: 'What career fields interest you most?',
-    category: 'interests',
-    style: 'font-extrabold text-lg uppercase tracking-widest text-red-300 bg-red-900/25 p-4 rounded-md border-l-8 border-red-500 shadow-inner'
-  }
-];
-
 const CreateGame = () => {
-  const [responses, setResponses] = useState<Record<string, string>>({});
+  const [responses, setResponses] = useState('');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
 
-  const handleResponseChange = (questionId: string, value: string) => {
-    setResponses(prev => ({
-      ...prev,
-      [questionId]: value
-    }));
-  };
-
-  const isAllQuestionsAnswered = () => {
-    return questions.every(q => responses[q.id]?.trim());
-  };
-
-  const handleGenerate = () => {
-    if (!isAllQuestionsAnswered()) {
+  const handleAnalyze = () => {
+    if (!responses.trim()) {
       toast({
-        title: "Please answer all questions",
-        description: "Complete all assessment questions to get your recommendations",
+        title: "Please provide your responses",
+        description: "Tell us about your academic background, interests, and goals",
         variant: "destructive",
       });
       return;
@@ -88,7 +38,7 @@ const CreateGame = () => {
         description: "Your personalized course recommendations are ready.",
       });
       setIsAnalyzing(false);
-      navigate('/recommendations');
+      navigate('/workspace');
     }, 2000);
   };
 
@@ -121,32 +71,23 @@ const CreateGame = () => {
           Discover your ideal course path.
         </h1>
         
-        {/* Assessment Questions */}
+        {/* Course assessment area */}
         <div className="bg-arcade-terminal/40 backdrop-blur-sm rounded-xl p-6 border border-gray-800 shadow-xl max-w-4xl mx-auto mb-8">
-          <div className="mb-6">
-            <h3 className="text-lg font-semibold text-white mb-2">Assessment Questions</h3>
-            <p className="text-sm text-gray-400 mb-6">
-              Answer all questions below to get personalized course recommendations based on your profile.
+          <div className="mb-4">
+            <h3 className="text-lg font-semibold text-white mb-2">Tell us about yourself:</h3>
+            <p className="text-sm text-gray-400 mb-4">
+              Share information about your education, interests, skills, and career goals to get personalized recommendations.
             </p>
           </div>
           
-          <div className="space-y-6">
-            {questions.map((question) => (
-              <div key={question.id} className="space-y-3">
-                <div className={question.style}>
-                  {question.text}
-                </div>
-                <textarea
-                  value={responses[question.id] || ''}
-                  onChange={(e) => handleResponseChange(question.id, e.target.value)}
-                  placeholder="Enter your response here..."
-                  className="w-full bg-arcade-terminal border border-gray-700 rounded-lg p-3 min-h-20 text-white focus:outline-none focus:ring-2 focus:ring-arcade-purple resize-none text-sm"
-                />
-              </div>
-            ))}
-          </div>
+          <textarea
+            value={responses}
+            onChange={(e) => setResponses(e.target.value)}
+            placeholder="Example: I'm currently in Year 12 studying Biology, Chemistry, and Math. I enjoy problem-solving and helping others. I find creative writing challenging but I'm good at logical thinking. I'm interested in healthcare careers..."
+            className="w-full bg-arcade-terminal border border-gray-700 rounded-lg p-4 min-h-32 text-white focus:outline-none focus:ring-2 focus:ring-arcade-purple resize-none"
+          />
           
-          <div className="flex flex-wrap items-center justify-between mt-6">
+          <div className="flex flex-wrap items-center justify-between mt-4">
             <div className="flex space-x-3">
               <button className="p-2 text-gray-400 hover:text-white">
                 <Share2 size={20} />
@@ -163,16 +104,12 @@ const CreateGame = () => {
               </div>
               
               <button 
-                onClick={handleGenerate}
-                disabled={!isAllQuestionsAnswered() || isAnalyzing}
-                className={`rounded-lg px-8 py-3 flex items-center font-medium transition-all ${
-                  isAllQuestionsAnswered() && !isAnalyzing
-                    ? 'bg-arcade-purple hover:bg-opacity-90 text-white shadow-lg shadow-arcade-purple/25'
-                    : 'bg-gray-600 text-gray-400 cursor-not-allowed'
-                }`}
+                onClick={handleAnalyze}
+                disabled={isAnalyzing}
+                className="bg-arcade-purple hover:bg-opacity-90 text-white rounded-lg px-6 py-2 flex items-center font-medium disabled:opacity-70"
               >
                 <Sparkles size={18} className="mr-2" />
-                {isAnalyzing ? 'Generating...' : 'Generate'}
+                {isAnalyzing ? 'Analyzing...' : 'Get Recommendations'}
               </button>
             </div>
           </div>
@@ -194,6 +131,39 @@ const CreateGame = () => {
               <span>{category.name}</span>
             </button>
           ))}
+        </div>
+        
+        {/* Questions section */}
+        <div className="max-w-4xl mx-auto mt-12">
+          <h3 className="text-xl font-semibold text-white mb-6 text-center">Sample Assessment Questions</h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="bg-arcade-terminal/20 rounded-lg p-4 border border-gray-800">
+              <h4 className="font-semibold text-arcade-purple mb-2">📚 Education</h4>
+              <ul className="text-sm text-gray-300 space-y-1">
+                <li>• What program/course are you currently taking?</li>
+                <li>• What subjects do you enjoy most?</li>
+                <li>• What subjects are most challenging?</li>
+              </ul>
+            </div>
+            
+            <div className="bg-arcade-terminal/20 rounded-lg p-4 border border-gray-800">
+              <h4 className="font-semibold text-arcade-purple mb-2">🎯 Skills</h4>
+              <ul className="text-sm text-gray-300 space-y-1">
+                <li>• What are your key strengths?</li>
+                <li>• Do you prefer logical or creative tasks?</li>
+                <li>• What activities energize you?</li>
+              </ul>
+            </div>
+            
+            <div className="bg-arcade-terminal/20 rounded-lg p-4 border border-gray-800">
+              <h4 className="font-semibold text-arcade-purple mb-2">💡 Interests</h4>
+              <ul className="text-sm text-gray-300 space-y-1">
+                <li>• What topics fascinate you?</li>
+                <li>• What career fields interest you?</li>
+                <li>• What impact do you want to make?</li>
+              </ul>
+            </div>
+          </div>
         </div>
       </div>
     </div>
