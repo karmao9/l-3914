@@ -1,6 +1,7 @@
 
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Sparkles } from 'lucide-react';
 
 const Index = () => {
   const [loaded, setLoaded] = useState(false);
@@ -22,20 +23,15 @@ const Index = () => {
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50">
       {/* Header */}
       <header className="container mx-auto px-4 py-6 flex items-center justify-between">
-        <div className="flex items-center space-x-2">
-          <span className="text-2xl font-bold">
-            <span className="text-orange-500">inteli</span>
-            <span className="text-gray-800">COURSE</span>
-          </span>
-        </div>
-        
-        <div className="flex items-center space-x-4">
-          <button className="px-6 py-2 text-orange-500 hover:text-orange-600 font-medium border border-orange-500 rounded-full hover:bg-orange-50 transition-colors">
-            Login
-          </button>
-          <button className="px-6 py-2 bg-orange-500 text-white font-medium rounded-full hover:bg-orange-600 transition-colors">
-            Sign Up
-          </button>
+        <div className="flex items-center space-x-3">
+          <div className="w-10 h-10 rounded-full bg-arcade-terminal flex items-center justify-center relative">
+            <div className="absolute inset-0 rounded-full bg-arcade-purple opacity-20 blur-xl"></div>
+            <div className="text-lg">🧠</div>
+          </div>
+          <div>
+            <h1 className="text-xl font-bold gradient-text">InteliCourse</h1>
+            <p className="text-xs text-gray-500">Course Recommendation System</p>
+          </div>
         </div>
       </header>
 
@@ -62,8 +58,9 @@ const Index = () => {
               
               <button 
                 onClick={handleGetStarted}
-                className="bg-orange-500 hover:bg-orange-600 text-white px-8 py-4 rounded-full text-lg font-medium transition-colors inline-flex items-center"
+                className="bg-arcade-purple hover:bg-opacity-90 text-white px-8 py-4 rounded-lg text-lg font-medium transition-colors inline-flex items-center"
               >
+                <Sparkles size={18} className="mr-2" />
                 Get Started
               </button>
             </div>
