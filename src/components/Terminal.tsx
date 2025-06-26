@@ -10,7 +10,8 @@ const Terminal = () => {
   const [userResponses, setUserResponses] = useState<string[]>([]);
   const [currentInput, setCurrentInput] = useState('');
   const [isWaitingForInput, setIsWaitingForInput] = useState(false);
-  const [showAllQuestions, setShowAllQuestions] = useState(false);
+  const [editingIndex, setEditingIndex] = useState<number | null>(null);
+  const [editValue, setEditValue] = useState('');
   const terminalRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
@@ -74,7 +75,6 @@ const Terminal = () => {
 
   const startQuestions = () => {
     setTimeout(() => {
-      setShowAllQuestions(true);
       setIsWaitingForInput(true);
       if (inputRef.current) {
         inputRef.current.focus();
@@ -84,7 +84,8 @@ const Terminal = () => {
 
   const handleInputSubmit = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter' && currentInput.trim()) {
-      const newResponses = [...userResponses, currentInput.trim()];
+      const newResponses = [...userResponses];
+      newResponses[currentQuestionIndex] = currentInput.trim();
       setUserResponses(newResponses);
       setCurrentInput('');
       
@@ -102,10 +103,32 @@ const Terminal = () => {
     }
   };
 
+  const handleEditClick = (index: number) => {
+    setEditingIndex(index);
+    setEditValue(userResponses[index] || '');
+  };
+
+  const handleEditSubmit = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' && editValue.trim()) {
+      const newResponses = [...userResponses];
+      newResponses[editingIndex!] = editValue.trim();
+      setUserResponses(newResponses);
+      setEditingIndex(null);
+      setEditValue('');
+    } else if (e.key === 'Escape') {
+      setEditingIndex(null);
+      setEditValue('');
+    }
+  };
+
   const renderQuestionsAndAnswers = () => {
-    return questions.map((question, index) => {
-      const isCurrentQuestion = index === currentQuestionIndex;
+    // Only show questions up to the current question index + 1
+    const questionsToShow = questions.slice(0, Math.min(currentQuestionIndex + 1, questions.length));
+    
+    return questionsToShow.map((question, index) => {
+      const isCurrentQuestion = index === currentQuestionIndex && isWaitingForInput;
       const hasAnswer = userResponses[index];
+      const isEditing = editingIndex === index;
       
       return (
         <div key={index} className="mb-2">
@@ -115,15 +138,33 @@ const Terminal = () => {
               {question.text}
             </span>
           </div>
-          {hasAnswer && (
+          {hasAnswer && !isEditing && (
             <div className="mt-1">
               <span className="text-green-400">&gt;</span>
-              <span className="bg-green-900/30 text-green-300 px-2 py-1 rounded ml-1 border border-green-600">
+              <span 
+                className="bg-green-900/30 text-green-300 px-2 py-1 rounded ml-1 border border-green-600 cursor-pointer hover:bg-green-900/50"
+                onClick={() => handleEditClick(index)}
+                title="Click to edit"
+              >
                 {userResponses[index]}
               </span>
             </div>
           )}
-          {isCurrentQuestion && isWaitingForInput && !hasAnswer && (
+          {isEditing && (
+            <div className="mt-1">
+              <span className="text-green-400">&gt;</span>
+              <input
+                type="text"
+                value={editValue}
+                onChange={(e) => setEditValue(e.target.value)}
+                onKeyDown={handleEditSubmit}
+                className="bg-transparent border-none outline-none text-green-400 font-mono text-sm md:text-base ml-1"
+                placeholder="Press Enter to save, Escape to cancel"
+                autoFocus
+              />
+            </div>
+          )}
+          {isCurrentQuestion && !hasAnswer && (
             <div className="mt-1">
               <span className="text-green-400">&gt;</span>
               <input
@@ -166,8 +207,8 @@ const Terminal = () => {
         className="terminal-content text-sm md:text-base text-green-400 font-mono mt-2 min-h-40 max-h-80 overflow-y-auto relative"
       >
         {terminalText}
-        {showAllQuestions && renderQuestionsAndAnswers()}
-        {!isWaitingForInput && animationComplete && !showAllQuestions && (
+        {animationComplete && renderQuestionsAndAnswers()}
+        {!isWaitingForInput && animationComplete && userResponses.length === 0 && (
           <span className={`cursor ${cursorVisible ? 'opacity-100' : 'opacity-0'}`}></span>
         )}
       </div>
