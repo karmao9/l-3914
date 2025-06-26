@@ -1,15 +1,12 @@
 
 import { useEffect, useState } from 'react';
-import Header from '@/components/Header';
-import Terminal from '@/components/Terminal';
-import FeatureCard from '@/components/FeatureCard';
-import { GraduationCap, Brain, Target } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 const Index = () => {
   const [loaded, setLoaded] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
-    // Add small delay before starting animations
     const timer = setTimeout(() => {
       setLoaded(true);
     }, 100);
@@ -17,49 +14,91 @@ const Index = () => {
     return () => clearTimeout(timer);
   }, []);
 
+  const handleGetStarted = () => {
+    navigate('/assessment');
+  };
+
   return (
-    <div className="min-h-screen flex flex-col overflow-hidden bg-arcade-dark">
-      <div className="flex-1 container mx-auto px-4 py-8 max-w-6xl">
-        <Header />
-        
-        <div className={`mt-16 mb-12 text-center transition-opacity duration-700 ${loaded ? 'opacity-100' : 'opacity-0'}`}>
-          <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6">
-            <span className="gradient-text">Find Your Perfect University Course</span>
-          </h2>
-          <p className="text-lg text-gray-300 max-w-2xl mx-auto">
-            An intelligent system to help high school leavers choose suitable university courses based on their interests, skills, and career goals using Machine Learning.
-          </p>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50">
+      {/* Header */}
+      <header className="container mx-auto px-4 py-6 flex items-center justify-between">
+        <div className="flex items-center space-x-2">
+          <span className="text-2xl font-bold">
+            <span className="text-orange-500">inteli</span>
+            <span className="text-gray-800">COURSE</span>
+          </span>
         </div>
         
-        <Terminal />
-        
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto mt-16 mb-16">
-          <FeatureCard 
-            icon={<GraduationCap size={28} />}
-            title="Education Assessment"
-            description="Answer questions about your current program, favorite subjects, and academic challenges to get personalized recommendations"
-            delay="delay-100"
-          />
+        <div className="flex items-center space-x-4">
+          <button className="px-6 py-2 text-orange-500 hover:text-orange-600 font-medium border border-orange-500 rounded-full hover:bg-orange-50 transition-colors">
+            Login
+          </button>
+          <button className="px-6 py-2 bg-orange-500 text-white font-medium rounded-full hover:bg-orange-600 transition-colors">
+            Sign Up
+          </button>
+        </div>
+      </header>
+
+      {/* Main Content */}
+      <div className="container mx-auto px-4 py-12">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+          {/* Left Content */}
+          <div className={`space-y-8 transition-opacity duration-700 ${loaded ? 'opacity-100' : 'opacity-0'}`}>
+            <div className="space-y-6">
+              <h1 className="text-5xl lg:text-6xl font-bold text-gray-900 leading-tight">
+                Not Sure What to Study? We've Got You.
+              </h1>
+              
+              <div className="space-y-4">
+                <h2 className="text-xl font-semibold text-gray-800">
+                  Find the Right Course with AI-Powered Guidance
+                </h2>
+                <p className="text-gray-600 text-lg leading-relaxed">
+                  Take the guesswork out of choosing a university path. Our smart system 
+                  analyzes your interests, strengths, and goals to recommend the courses 
+                  that fit you best.
+                </p>
+              </div>
+              
+              <button 
+                onClick={handleGetStarted}
+                className="bg-orange-500 hover:bg-orange-600 text-white px-8 py-4 rounded-full text-lg font-medium transition-colors inline-flex items-center"
+              >
+                Get Started
+              </button>
+            </div>
+            
+            {/* Stats Cards */}
+            <div className="grid grid-cols-3 gap-6 mt-12">
+              <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 text-center">
+                <div className="text-3xl font-bold text-gray-900 mb-1">10+</div>
+                <div className="text-gray-600 text-sm">years of experience</div>
+              </div>
+              
+              <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 text-center">
+                <div className="text-3xl font-bold text-gray-900 mb-1">600+</div>
+                <div className="text-gray-600 text-sm">Recommendation</div>
+              </div>
+              
+              <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 text-center">
+                <div className="text-3xl font-bold text-gray-900 mb-1">800+</div>
+                <div className="text-gray-600 text-sm">Happy Clients</div>
+              </div>
+            </div>
+          </div>
           
-          <FeatureCard 
-            icon={<Brain size={28} />}
-            title="Interest & Skills Analysis"
-            description="Discover courses that match your strengths, whether you prefer logical thinking or creative expression"
-            delay="delay-300"
-          />
-          
-          <FeatureCard 
-            icon={<Target size={28} />}
-            title="Career Goal Matching"
-            description="Get course recommendations aligned with your future career aspirations using advanced ML algorithms"
-            delay="delay-500"
-          />
+          {/* Right Content - Hero Image */}
+          <div className={`flex justify-center transition-opacity duration-700 delay-300 ${loaded ? 'opacity-100' : 'opacity-0'}`}>
+            <div className="relative">
+              <img 
+                src="/lovable-uploads/a5f5ab03-bc7b-4f2b-9f8d-89c935ac1a49.png" 
+                alt="Happy student with glasses in pink sweater with colorful geometric background"
+                className="max-w-full h-auto"
+              />
+            </div>
+          </div>
         </div>
       </div>
-      
-      <footer className="py-6 border-t border-gray-800 text-center text-sm text-gray-500">
-        <p>© 2025 Course Compass. Helping students find their path.</p>
-      </footer>
     </div>
   );
 };
