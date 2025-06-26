@@ -1,6 +1,5 @@
-
 import { useState } from 'react';
-import { Share2, Download, Lock, Sparkles, ArrowLeft } from 'lucide-react';
+import { Lock, Sparkles, ArrowLeft } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from 'react-router-dom';
 
@@ -55,7 +54,7 @@ const CreateGame = () => {
           className="flex items-center text-gray-400 hover:text-white mb-6 transition-colors"
         >
           <ArrowLeft size={20} className="mr-2" />
-          <span>Back to home</span>
+          <span>Back</span>
         </button>
         
         {/* Icon at the top */}
@@ -87,31 +86,15 @@ const CreateGame = () => {
             className="w-full bg-arcade-terminal border border-gray-700 rounded-lg p-4 min-h-32 text-white focus:outline-none focus:ring-2 focus:ring-arcade-purple resize-none"
           />
           
-          <div className="flex flex-wrap items-center justify-between mt-4">
-            <div className="flex space-x-3">
-              <button className="p-2 text-gray-400 hover:text-white">
-                <Share2 size={20} />
-              </button>
-              <button className="p-2 text-gray-400 hover:text-white">
-                <Download size={20} />
-              </button>
-            </div>
-            
-            <div className="flex items-center space-x-3">
-              <div className="flex items-center px-3 py-1.5 text-sm border border-gray-700 rounded-lg bg-arcade-terminal/80">
-                <Lock size={16} className="mr-2 text-gray-400" />
-                <span className="text-gray-300">Private</span>
-              </div>
-              
-              <button 
-                onClick={handleAnalyze}
-                disabled={isAnalyzing}
-                className="bg-arcade-purple hover:bg-opacity-90 text-white rounded-lg px-6 py-2 flex items-center font-medium disabled:opacity-70"
-              >
-                <Sparkles size={18} className="mr-2" />
-                {isAnalyzing ? 'Analyzing...' : 'Get Recommendations'}
-              </button>
-            </div>
+          <div className="flex justify-end mt-4">
+            <button 
+              onClick={handleAnalyze}
+              disabled={isAnalyzing}
+              className="bg-arcade-purple hover:bg-opacity-90 text-white rounded-lg px-6 py-2 flex items-center font-medium disabled:opacity-70"
+            >
+              <Sparkles size={18} className="mr-2" />
+              {isAnalyzing ? 'Analyzing...' : 'Get Recommendations'}
+            </button>
           </div>
         </div>
         
