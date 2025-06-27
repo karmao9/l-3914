@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from "@/hooks/use-toast";
@@ -57,13 +56,17 @@ const GameWorkspace = () => {
     }, 1000);
   }
 
+  const handleGetRecommendations = () => {
+    navigate('/recommendations');
+  }
+
   return (
     <div className="flex flex-col h-screen bg-arcade-dark">
       {/* Header Bar */}
       <header className="bg-black border-b border-gray-800 p-3 flex items-center justify-between">
         <div className="flex items-center">
           <button 
-            onClick={() => navigate('/create-game')}
+            onClick={() => navigate('/assessment')}
             className="text-gray-300 hover:text-white flex items-center mr-4"
           >
             <ArrowLeft size={20} className="mr-1" />
@@ -87,11 +90,11 @@ const GameWorkspace = () => {
             <span>Show Code</span>
           </button>
           <button 
-            onClick={handleShare}
+            onClick={handleGetRecommendations}
             className="flex items-center px-3 py-1.5 text-white bg-arcade-purple hover:bg-opacity-90 rounded-md"
           >
             <Share size={18} className="mr-1.5" />
-            <span>Share Game</span>
+            <span>Get Recommendations</span>
           </button>
         </div>
       </header>

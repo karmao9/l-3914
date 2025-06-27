@@ -8,6 +8,7 @@ import Index from "./pages/Index";
 import CreateGame from "./pages/CreateGame";
 import FindCourse from "./pages/FindCourse";
 import GameWorkspace from "./pages/GameWorkspace";
+import Recommendations from "./pages/Recommendations";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -22,7 +23,8 @@ const App = () => (
           <Route path="/" element={<Index />} />
           <Route path="/find-course" element={<FindCourse />} />
           <Route path="/assessment" element={<CreateGame />} />
-          <Route path="/recommendations" element={<GameWorkspace />} />
+          <Route path="/recommendations" element={<Recommendations />} />
+          <Route path="/game-workspace" element={<GameWorkspace />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
