@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import CreateGame from "./pages/CreateGame";
+import FindCourse from "./pages/FindCourse";
 import GameWorkspace from "./pages/GameWorkspace";
 import NotFound from "./pages/NotFound";
 
@@ -19,6 +20,7 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Index />} />
+          <Route path="/find-course" element={<FindCourse />} />
           <Route path="/assessment" element={<CreateGame />} />
           <Route path="/recommendations" element={<GameWorkspace />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Sparkles } from 'lucide-react';
@@ -17,7 +16,7 @@ const Index = () => {
   }, []);
 
   const handleGetStarted = () => {
-    navigate('/assessment');
+    navigate('/find-course');
   };
 
   return (
