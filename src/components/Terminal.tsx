@@ -1,6 +1,8 @@
+
 import { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useRecommendations } from '@/hooks/useRecommendations';
+import { Button } from '@/components/ui/button';
 
 const Terminal = () => {
   const [terminalText, setTerminalText] = useState('');
@@ -13,6 +15,7 @@ const Terminal = () => {
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [editValue, setEditValue] = useState('');
   const [isProcessingRecommendations, setIsProcessingRecommendations] = useState(false);
+  const [showSubmitButton, setShowSubmitButton] = useState(false);
   const terminalRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
@@ -64,7 +67,6 @@ const Terminal = () => {
         timeoutId = setTimeout(typeNextChar, currentLine.finalDelay || 0);
       }
 
-      // Ensure terminal scrolls to bottom as text is added
       if (terminalRef.current) {
         terminalRef.current.scrollTop = terminalRef.current.scrollHeight;
       }
@@ -95,35 +97,40 @@ const Terminal = () => {
         setCurrentQuestionIndex(currentQuestionIndex + 1);
       } else {
         setIsWaitingForInput(false);
-        setIsProcessingRecommendations(true);
-        
-        setTerminalText(prev => prev + '\n✨ Assessment complete! Analyzing your responses...\n🤖 Our AI is processing your preferences and generating personalized recommendations...');
-        
-        try {
-          // Generate recommendations using the ML backend
-          const recommendations = await generateRecommendations({
-            currentProgram: newResponses[0],
-            favoriteSubjects: newResponses[1],
-            difficultSubjects: newResponses[2],
-            strengths: newResponses[3],
-            taskPreference: newResponses[4],
-            careerInterests: newResponses[5]
-          });
-
-          console.log('Generated recommendations:', recommendations);
-          
-          setTerminalText(prev => prev + '\n🎯 Perfect matches found! Redirecting to your personalized recommendations...');
-          
-          setTimeout(() => {
-            navigate('/recommendations');
-          }, 2000);
-          
-        } catch (error) {
-          console.error('Error generating recommendations:', error);
-          setTerminalText(prev => prev + '\n❌ Error generating recommendations. Please try again or contact support.');
-          setIsProcessingRecommendations(false);
-        }
+        setShowSubmitButton(true);
       }
+    }
+  };
+
+  const handleSubmitAssessment = async () => {
+    setShowSubmitButton(false);
+    setIsProcessingRecommendations(true);
+    
+    setTerminalText(prev => prev + '\n✨ Assessment complete! Analyzing your responses...\n🤖 Our AI is processing your preferences and generating personalized recommendations...');
+    
+    try {
+      const recommendations = await generateRecommendations({
+        currentProgram: userResponses[0],
+        favoriteSubjects: userResponses[1],
+        difficultSubjects: userResponses[2],
+        strengths: userResponses[3],
+        taskPreference: userResponses[4],
+        careerInterests: userResponses[5]
+      });
+
+      console.log('Generated recommendations:', recommendations);
+      
+      setTerminalText(prev => prev + '\n🎯 Perfect matches found! Redirecting to your personalized recommendations...');
+      
+      setTimeout(() => {
+        navigate('/recommendations');
+      }, 2000);
+      
+    } catch (error) {
+      console.error('Error generating recommendations:', error);
+      setTerminalText(prev => prev + '\n❌ Error generating recommendations. Please try again or contact support.');
+      setIsProcessingRecommendations(false);
+      setShowSubmitButton(true);
     }
   };
 
@@ -146,7 +153,6 @@ const Terminal = () => {
   };
 
   const renderQuestionsAndAnswers = () => {
-    // Only show questions up to the current question index + 1
     const questionsToShow = questions.slice(0, Math.min(currentQuestionIndex + 1, questions.length));
     
     return questionsToShow.map((question, index) => {
@@ -233,8 +239,22 @@ const Terminal = () => {
       >
         {terminalText}
         {animationComplete && renderQuestionsAndAnswers()}
-        {!isWaitingForInput && animationComplete && userResponses.length === 0 && !isProcessingRecommendations && (
+        {!isWaitingForInput && animationComplete && userResponses.length === 0 && !isProcessingRecommendations && !showSubmitButton && (
           <span className={`cursor ${cursorVisible ? 'opacity-100' : 'opacity-0'}`}></span>
+        )}
+        {showSubmitButton && (
+          <div className="mt-4 flex flex-col items-start gap-3">
+            <div className="text-cyan-400 text-sm">
+              📋 Review your responses above. Click any answer to edit, or submit to get your recommendations:
+            </div>
+            <Button 
+              onClick={handleSubmitAssessment}
+              className="bg-arcade-purple hover:bg-arcade-purple/80 text-white px-6 py-2 rounded-md font-semibold transition-colors"
+              disabled={userResponses.length !== questions.length}
+            >
+              🚀 Get My Course Recommendations
+            </Button>
+          </div>
         )}
         {isProcessingRecommendations && (
           <div className="mt-2">
