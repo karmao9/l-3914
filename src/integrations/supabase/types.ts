@@ -9,13 +9,229 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      courses: {
+        Row: {
+          average_salary: string
+          career_prospects: string[]
+          created_at: string
+          description: string
+          duration: string
+          embedding: string | null
+          employment_rate: string
+          entry_requirements: string
+          field: string
+          id: string
+          key_subjects: string[]
+          location: string
+          title: string
+          university: string
+        }
+        Insert: {
+          average_salary: string
+          career_prospects: string[]
+          created_at?: string
+          description: string
+          duration: string
+          embedding?: string | null
+          employment_rate: string
+          entry_requirements: string
+          field: string
+          id?: string
+          key_subjects: string[]
+          location: string
+          title: string
+          university: string
+        }
+        Update: {
+          average_salary?: string
+          career_prospects?: string[]
+          created_at?: string
+          description?: string
+          duration?: string
+          embedding?: string | null
+          employment_rate?: string
+          entry_requirements?: string
+          field?: string
+          id?: string
+          key_subjects?: string[]
+          location?: string
+          title?: string
+          university?: string
+        }
+        Relationships: []
+      }
+      recommendations: {
+        Row: {
+          course_id: string
+          created_at: string
+          id: string
+          similarity_score: number
+          student_response_id: string
+        }
+        Insert: {
+          course_id: string
+          created_at?: string
+          id?: string
+          similarity_score: number
+          student_response_id: string
+        }
+        Update: {
+          course_id?: string
+          created_at?: string
+          id?: string
+          similarity_score?: number
+          student_response_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recommendations_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recommendations_student_response_id_fkey"
+            columns: ["student_response_id"]
+            isOneToOne: false
+            referencedRelation: "student_responses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      student_responses: {
+        Row: {
+          career_interests: string
+          created_at: string
+          current_program: string
+          difficult_subjects: string
+          embedding: string | null
+          favorite_subjects: string
+          id: string
+          strengths: string
+          task_preference: string
+        }
+        Insert: {
+          career_interests: string
+          created_at?: string
+          current_program: string
+          difficult_subjects: string
+          embedding?: string | null
+          favorite_subjects: string
+          id?: string
+          strengths: string
+          task_preference: string
+        }
+        Update: {
+          career_interests?: string
+          created_at?: string
+          current_program?: string
+          difficult_subjects?: string
+          embedding?: string | null
+          favorite_subjects?: string
+          id?: string
+          strengths?: string
+          task_preference?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      binary_quantize: {
+        Args: { "": string } | { "": unknown }
+        Returns: unknown
+      }
+      halfvec_avg: {
+        Args: { "": number[] }
+        Returns: unknown
+      }
+      halfvec_out: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
+      halfvec_send: {
+        Args: { "": unknown }
+        Returns: string
+      }
+      halfvec_typmod_in: {
+        Args: { "": unknown[] }
+        Returns: number
+      }
+      hnsw_bit_support: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
+      hnsw_halfvec_support: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
+      hnsw_sparsevec_support: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
+      hnswhandler: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
+      ivfflat_bit_support: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
+      ivfflat_halfvec_support: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
+      ivfflathandler: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
+      l2_norm: {
+        Args: { "": unknown } | { "": unknown }
+        Returns: number
+      }
+      l2_normalize: {
+        Args: { "": string } | { "": unknown } | { "": unknown }
+        Returns: unknown
+      }
+      sparsevec_out: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
+      sparsevec_send: {
+        Args: { "": unknown }
+        Returns: string
+      }
+      sparsevec_typmod_in: {
+        Args: { "": unknown[] }
+        Returns: number
+      }
+      vector_avg: {
+        Args: { "": number[] }
+        Returns: string
+      }
+      vector_dims: {
+        Args: { "": string } | { "": unknown }
+        Returns: number
+      }
+      vector_norm: {
+        Args: { "": string }
+        Returns: number
+      }
+      vector_out: {
+        Args: { "": string }
+        Returns: unknown
+      }
+      vector_send: {
+        Args: { "": string }
+        Returns: string
+      }
+      vector_typmod_in: {
+        Args: { "": unknown[] }
+        Returns: number
+      }
     }
     Enums: {
       [_ in never]: never
