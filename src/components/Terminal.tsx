@@ -1,6 +1,6 @@
-
 import { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useRecommendations } from '@/hooks/useRecommendations';
 
 const Terminal = () => {
   const [terminalText, setTerminalText] = useState('');
@@ -12,9 +12,11 @@ const Terminal = () => {
   const [isWaitingForInput, setIsWaitingForInput] = useState(false);
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [editValue, setEditValue] = useState('');
+  const [isProcessingRecommendations, setIsProcessingRecommendations] = useState(false);
   const terminalRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
+  const { generateRecommendations, setRecommendations } = useRecommendations();
 
   const questions = [
     { text: "Which Program/Course are you currently taking?", color: "text-blue-400", underlineColor: "border-blue-400" },
@@ -82,7 +84,7 @@ const Terminal = () => {
     }, 500);
   };
 
-  const handleInputSubmit = (e: React.KeyboardEvent<HTMLInputElement>) => {
+  const handleInputSubmit = async (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter' && currentInput.trim()) {
       const newResponses = [...userResponses];
       newResponses[currentQuestionIndex] = currentInput.trim();
@@ -93,12 +95,34 @@ const Terminal = () => {
         setCurrentQuestionIndex(currentQuestionIndex + 1);
       } else {
         setIsWaitingForInput(false);
-        setTimeout(() => {
-          setTerminalText(prev => prev + '\n✨ Assessment complete! Analyzing your responses...\n🚀 Redirecting to your personalized recommendations...');
+        setIsProcessingRecommendations(true);
+        
+        setTerminalText(prev => prev + '\n✨ Assessment complete! Analyzing your responses...\n🤖 Our AI is processing your preferences and generating personalized recommendations...');
+        
+        try {
+          // Generate recommendations using the ML backend
+          const recommendations = await generateRecommendations({
+            currentProgram: newResponses[0],
+            favoriteSubjects: newResponses[1],
+            difficultSubjects: newResponses[2],
+            strengths: newResponses[3],
+            taskPreference: newResponses[4],
+            careerInterests: newResponses[5]
+          });
+
+          console.log('Generated recommendations:', recommendations);
+          
+          setTerminalText(prev => prev + '\n🎯 Perfect matches found! Redirecting to your personalized recommendations...');
+          
           setTimeout(() => {
-            navigate('/assessment');
+            navigate('/recommendations');
           }, 2000);
-        }, 500);
+          
+        } catch (error) {
+          console.error('Error generating recommendations:', error);
+          setTerminalText(prev => prev + '\n❌ Error generating recommendations. Please try again or contact support.');
+          setIsProcessingRecommendations(false);
+        }
       }
     }
   };
@@ -175,6 +199,7 @@ const Terminal = () => {
                 onKeyDown={handleInputSubmit}
                 className="bg-transparent border-none outline-none text-green-400 font-mono text-sm md:text-base ml-1"
                 placeholder=""
+                disabled={isProcessingRecommendations}
               />
             </div>
           )}
@@ -208,8 +233,16 @@ const Terminal = () => {
       >
         {terminalText}
         {animationComplete && renderQuestionsAndAnswers()}
-        {!isWaitingForInput && animationComplete && userResponses.length === 0 && (
+        {!isWaitingForInput && animationComplete && userResponses.length === 0 && !isProcessingRecommendations && (
           <span className={`cursor ${cursorVisible ? 'opacity-100' : 'opacity-0'}`}></span>
+        )}
+        {isProcessingRecommendations && (
+          <div className="mt-2">
+            <div className="flex items-center text-yellow-400">
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-yellow-400 mr-2"></div>
+              <span>Processing with AI...</span>
+            </div>
+          </div>
         )}
       </div>
     </div>
