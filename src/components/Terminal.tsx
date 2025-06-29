@@ -1,8 +1,7 @@
-
 import { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useRecommendations } from '@/hooks/useRecommendations';
 import { Button } from '@/components/ui/button';
+import { useRecommendations } from '@/hooks/useRecommendations';
 
 const Terminal = () => {
   const [terminalText, setTerminalText] = useState('');
@@ -14,12 +13,11 @@ const Terminal = () => {
   const [isWaitingForInput, setIsWaitingForInput] = useState(false);
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [editValue, setEditValue] = useState('');
-  const [isProcessingRecommendations, setIsProcessingRecommendations] = useState(false);
   const [showSubmitButton, setShowSubmitButton] = useState(false);
   const terminalRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
-  const { generateRecommendations, setRecommendations } = useRecommendations();
+  const { setRecommendations } = useRecommendations();
 
   const questions = [
     { text: "Which Program/Course are you currently taking?", color: "text-blue-400", underlineColor: "border-blue-400" },
@@ -104,34 +102,22 @@ const Terminal = () => {
 
   const handleSubmitAssessment = async () => {
     setShowSubmitButton(false);
-    setIsProcessingRecommendations(true);
     
-    setTerminalText(prev => prev + '\n✨ Assessment complete! Analyzing your responses...\n🤖 Our AI is processing your preferences and generating personalized recommendations...');
+    setTerminalText(prev => prev + '\n✨ Initial assessment complete! Redirecting to detailed assessment...');
     
-    try {
-      const recommendations = await generateRecommendations({
-        currentProgram: userResponses[0],
-        favoriteSubjects: userResponses[1],
-        difficultSubjects: userResponses[2],
-        strengths: userResponses[3],
-        taskPreference: userResponses[4],
-        careerInterests: userResponses[5]
-      });
-
-      console.log('Generated recommendations:', recommendations);
-      
-      setTerminalText(prev => prev + '\n🎯 Perfect matches found! Redirecting to your personalized recommendations...');
-      
-      setTimeout(() => {
-        navigate('/recommendations');
-      }, 2000);
-      
-    } catch (error) {
-      console.error('Error generating recommendations:', error);
-      setTerminalText(prev => prev + '\n❌ Error generating recommendations. Please try again or contact support.');
-      setIsProcessingRecommendations(false);
-      setShowSubmitButton(true);
-    }
+    // Store responses in sessionStorage to pass to assessment page
+    sessionStorage.setItem('initialResponses', JSON.stringify({
+      currentProgram: userResponses[0],
+      favoriteSubjects: userResponses[1],
+      difficultSubjects: userResponses[2],
+      strengths: userResponses[3],
+      taskPreference: userResponses[4],
+      careerInterests: userResponses[5]
+    }));
+    
+    setTimeout(() => {
+      navigate('/assessment');
+    }, 1500);
   };
 
   const handleEditClick = (index: number) => {
@@ -205,7 +191,7 @@ const Terminal = () => {
                 onKeyDown={handleInputSubmit}
                 className="bg-transparent border-none outline-none text-green-400 font-mono text-sm md:text-base ml-1"
                 placeholder=""
-                disabled={isProcessingRecommendations}
+                disabled={false}
               />
             </div>
           )}
@@ -239,29 +225,21 @@ const Terminal = () => {
       >
         {terminalText}
         {animationComplete && renderQuestionsAndAnswers()}
-        {!isWaitingForInput && animationComplete && userResponses.length === 0 && !isProcessingRecommendations && !showSubmitButton && (
+        {!isWaitingForInput && animationComplete && userResponses.length === 0 && !showSubmitButton && (
           <span className={`cursor ${cursorVisible ? 'opacity-100' : 'opacity-0'}`}></span>
         )}
         {showSubmitButton && (
           <div className="mt-4 flex flex-col items-start gap-3">
             <div className="text-cyan-400 text-sm">
-              📋 Review your responses above. Click any answer to edit, or submit to get your recommendations:
+              📋 Review your responses above. Click any answer to edit, or continue to detailed assessment:
             </div>
             <Button 
               onClick={handleSubmitAssessment}
               className="bg-arcade-purple hover:bg-arcade-purple/80 text-white px-6 py-2 rounded-md font-semibold transition-colors"
               disabled={userResponses.length !== questions.length}
             >
-              🚀 Get My Course Recommendations
+              🚀 Continue to Assessment
             </Button>
-          </div>
-        )}
-        {isProcessingRecommendations && (
-          <div className="mt-2">
-            <div className="flex items-center text-yellow-400">
-              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-yellow-400 mr-2"></div>
-              <span>Processing with AI...</span>
-            </div>
           </div>
         )}
       </div>
