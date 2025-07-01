@@ -145,71 +145,34 @@ serve(async (req) => {
 
     console.log('Saved student response with ID:', savedResponse.id);
 
-    // Step 4: Get all courses and generate embeddings if they don't exist
+    // Step 4: Get all courses that HAVE embeddings (skip those without)
     const { data: courses, error: coursesError } = await supabase
       .from('courses')
-      .select('*');
+      .select('*')
+      .not('embedding', 'is', null);
 
     if (coursesError) {
       console.error('Error fetching courses:', coursesError);
       throw coursesError;
     }
 
-    console.log(`Found ${courses.length} courses`);
+    console.log(`Found ${courses.length} courses with embeddings`);
 
-    // Step 5: Generate embeddings for courses that don't have them (with retry logic)
-    const coursesWithEmbeddings: Course[] = [];
-    
-    for (const course of courses) {
-      let courseEmbedding = course.embedding;
-      
-      if (!courseEmbedding) {
-        // Generate embedding for course
-        const courseText = `
-          Title: ${course.title}
-          University: ${course.university}
-          Field: ${course.field}
-          Description: ${course.description}
-          Key Subjects: ${course.key_subjects.join(', ')}
-          Career Prospects: ${course.career_prospects.join(', ')}
-        `.trim();
-
-        console.log(`Generating embedding for course: ${course.title}`);
-        
-        try {
-          const courseEmbeddingData = await makeOpenAIRequest(
-            'https://api.openai.com/v1/embeddings',
-            {
-              model: 'text-embedding-3-large',
-              input: courseText,
-              dimensions: 3072
-            },
-            openaiApiKey
-          );
-
-          courseEmbedding = courseEmbeddingData.data[0].embedding;
-
-          // Update course with embedding
-          await supabase
-            .from('courses')
-            .update({ embedding: courseEmbedding })
-            .eq('id', course.id);
-
-          console.log(`Generated and saved embedding for course: ${course.title}`);
-        } catch (error) {
-          console.error(`Failed to generate embedding for course ${course.title} after retries:`, error);
-          // Skip this course if we can't generate its embedding
-          continue;
+    if (courses.length === 0) {
+      // No courses have embeddings yet - suggest running the embedding generation
+      return new Response(
+        JSON.stringify({ 
+          success: false, 
+          error: 'No courses have embeddings generated yet. Please run the course embedding generation first.' 
+        }),
+        {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         }
-      }
-
-      coursesWithEmbeddings.push({
-        ...course,
-        embedding: courseEmbedding
-      });
+      );
     }
 
-    // Step 6: Calculate cosine similarity between student and each course
+    // Step 5: Calculate cosine similarity between student and each course
     function cosineSimilarity(vecA: number[], vecB: number[]): number {
       const dotProduct = vecA.reduce((sum, a, i) => sum + a * vecB[i], 0);
       const magnitudeA = Math.sqrt(vecA.reduce((sum, a) => sum + a * a, 0));
@@ -217,12 +180,12 @@ serve(async (req) => {
       return dotProduct / (magnitudeA * magnitudeB);
     }
 
-    const recommendations = coursesWithEmbeddings.map(course => ({
+    const recommendations = courses.map(course => ({
       course,
       similarity: cosineSimilarity(studentEmbedding, course.embedding)
     }));
 
-    // Step 7: Sort by similarity and get top 5
+    // Step 6: Sort by similarity and get top 5
     const topRecommendations = recommendations
       .sort((a, b) => b.similarity - a.similarity)
       .slice(0, 5);
@@ -232,7 +195,7 @@ serve(async (req) => {
       similarity: r.similarity
     })));
 
-    // Step 8: Save recommendations to database
+    // Step 7: Save recommendations to database
     const recommendationInserts = topRecommendations.map(rec => ({
       student_response_id: savedResponse.id,
       course_id: rec.course.id,
@@ -247,7 +210,7 @@ serve(async (req) => {
       console.error('Error saving recommendations:', recError);
     }
 
-    // Step 9: Format and return recommendations
+    // Step 8: Format and return recommendations
     const formattedRecommendations = topRecommendations.map(rec => ({
       id: rec.course.id,
       title: rec.course.title,
