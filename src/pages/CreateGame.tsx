@@ -31,29 +31,32 @@ const CreateGame = () => {
   }, []);
 
   const handleAnalyze = async () => {
-    if (!responses.trim()) {
+    // Check if we have initial responses
+    if (!initialResponses) {
       toast({
-        title: "Please provide your responses",
-        description: "Tell us more about your academic background, interests, and goals",
+        title: "Missing Information",
+        description: "Please complete the initial questionnaire first.",
         variant: "destructive",
       });
+      navigate('/find-course');
       return;
     }
     
     setIsAnalyzing(true);
     
     try {
-      // Combine initial responses with detailed responses
-      const combinedResponses = {
-        currentProgram: initialResponses?.currentProgram || 'Not specified',
-        favoriteSubjects: initialResponses?.favoriteSubjects || 'Not specified',
-        difficultSubjects: initialResponses?.difficultSubjects || 'Not specified',
-        strengths: initialResponses?.strengths || 'Not specified',
-        taskPreference: initialResponses?.taskPreference || 'Not specified',
-        careerInterests: `${initialResponses?.careerInterests || ''} ${responses}`.trim()
+      // Use only the initial responses from the find course page
+      const studentResponses = {
+        currentProgram: initialResponses.currentProgram || 'Not specified',
+        favoriteSubjects: initialResponses.favoriteSubjects || 'Not specified',
+        difficultSubjects: initialResponses.difficultSubjects || 'Not specified',
+        strengths: initialResponses.strengths || 'Not specified',
+        taskPreference: initialResponses.taskPreference || 'Not specified',
+        careerInterests: initialResponses.careerInterests || 'Not specified'
       };
 
-      await generateRecommendations(combinedResponses);
+      console.log('Generating recommendations with:', studentResponses);
+      await generateRecommendations(studentResponses);
       
       toast({
         title: "Analysis Complete!",
@@ -63,9 +66,18 @@ const CreateGame = () => {
       navigate('/recommendations');
     } catch (error) {
       console.error('Error generating recommendations:', error);
+      
+      // Check if it's a rate limiting error
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      const isRateLimitError = errorMessage.includes('Too Many Requests') || 
+                               errorMessage.includes('429') || 
+                               errorMessage.includes('rate limit');
+      
       toast({
-        title: "Analysis Failed",
-        description: "There was an error generating your recommendations. Please try again.",
+        title: isRateLimitError ? "Rate Limit Exceeded" : "Analysis Failed",
+        description: isRateLimitError 
+          ? "The OpenAI API rate limit has been exceeded. Please wait a few minutes and try again."
+          : "There was an error generating your recommendations. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -99,16 +111,16 @@ const CreateGame = () => {
         
         {/* Main heading */}
         <h1 className="text-4xl md:text-6xl font-bold text-white text-center mb-4 tracking-tight">
-          Tell us more about yourself
+          Ready for Your Recommendations
         </h1>
         <p className="text-gray-300 text-center mb-16 max-w-2xl mx-auto">
-          Based on your initial responses, help us understand you better to provide more accurate course recommendations.
+          Based on your responses, we'll use AI to find the perfect course matches for you.
         </p>
 
         {/* Show initial responses summary */}
         {initialResponses && (
           <div className="bg-arcade-terminal/20 backdrop-blur-sm rounded-xl p-6 border border-gray-800 max-w-4xl mx-auto mb-8">
-            <h3 className="text-lg font-semibold text-white mb-4">Your Initial Responses:</h3>
+            <h3 className="text-lg font-semibold text-white mb-4">Your Responses:</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
               <div className="text-gray-300">
                 <span className="text-arcade-purple font-medium">Current Program:</span> {initialResponses.currentProgram}
@@ -132,30 +144,21 @@ const CreateGame = () => {
           </div>
         )}
         
-        {/* Course assessment area */}
+        {/* Generate recommendations button */}
         <div className="bg-arcade-terminal/40 backdrop-blur-sm rounded-xl p-6 border border-gray-800 shadow-xl max-w-4xl mx-auto mb-8">
-          <div className="mb-4">
-            <h3 className="text-lg font-semibold text-white mb-2">Additional Details:</h3>
-            <p className="text-sm text-gray-400 mb-4">
-              Share more specific information about your goals, interests, or any other details that might help us recommend the perfect course for you.
+          <div className="text-center">
+            <h3 className="text-lg font-semibold text-white mb-4">Generate Your Course Recommendations</h3>
+            <p className="text-sm text-gray-400 mb-6">
+              Our AI will analyze your responses and match you with the most suitable courses from our database.
             </p>
-          </div>
-          
-          <textarea
-            value={responses}
-            onChange={(e) => setResponses(e.target.value)}
-            placeholder="Example: I'm particularly interested in working with technology in healthcare. I enjoy solving complex problems and have always been fascinated by how data can improve patient outcomes. I'm also interested in the business side of healthcare and would like to understand how to manage healthcare systems effectively..."
-            className="w-full bg-arcade-terminal border border-gray-700 rounded-lg p-4 min-h-32 text-white focus:outline-none focus:ring-2 focus:ring-arcade-purple resize-none"
-          />
-          
-          <div className="flex justify-end mt-4">
+            
             <button 
               onClick={handleAnalyze}
-              disabled={isAnalyzing}
-              className="bg-arcade-purple hover:bg-opacity-90 text-white rounded-lg px-6 py-2 flex items-center font-medium disabled:opacity-70"
+              disabled={isAnalyzing || !initialResponses}
+              className="bg-arcade-purple hover:bg-opacity-90 text-white rounded-lg px-8 py-3 flex items-center font-medium disabled:opacity-70 mx-auto"
             >
               <Sparkles size={18} className="mr-2" />
-              {isAnalyzing ? 'Analyzing...' : 'Get My Recommendations'}
+              {isAnalyzing ? 'Analyzing Your Profile...' : 'Get My Recommendations'}
             </button>
           </div>
         </div>
@@ -178,34 +181,34 @@ const CreateGame = () => {
           ))}
         </div>
         
-        {/* Questions section */}
+        {/* Information section */}
         <div className="max-w-4xl mx-auto mt-12">
-          <h3 className="text-xl font-semibold text-white mb-6 text-center">Consider These Areas</h3>
+          <h3 className="text-xl font-semibold text-white mb-6 text-center">How Our AI Recommendation Works</h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="bg-arcade-terminal/20 rounded-lg p-4 border border-gray-800">
-              <h4 className="font-semibold text-arcade-purple mb-2">🎯 Future Goals</h4>
+              <h4 className="font-semibold text-arcade-purple mb-2">🧠 AI Analysis</h4>
               <ul className="text-sm text-gray-300 space-y-1">
-                <li>• What impact do you want to make?</li>
-                <li>• Where do you see yourself in 5-10 years?</li>
-                <li>• What type of work environment appeals to you?</li>
+                <li>• Analyzes your academic background</li>
+                <li>• Considers your interests and strengths</li>
+                <li>• Matches with career preferences</li>
               </ul>
             </div>
             
             <div className="bg-arcade-terminal/20 rounded-lg p-4 border border-gray-800">
-              <h4 className="font-semibold text-arcade-purple mb-2">💡 Specific Interests</h4>
+              <h4 className="font-semibold text-arcade-purple mb-2">📊 Smart Matching</h4>
               <ul className="text-sm text-gray-300 space-y-1">
-                <li>• What topics fascinate you most?</li>
-                <li>• What problems do you want to solve?</li>
-                <li>• What industries excite you?</li>
+                <li>• Uses advanced algorithms</li>
+                <li>• Compares with course database</li>
+                <li>• Calculates compatibility scores</li>
               </ul>
             </div>
             
             <div className="bg-arcade-terminal/20 rounded-lg p-4 border border-gray-800">
-              <h4 className="font-semibold text-arcade-purple mb-2">🎯 Learning Style</h4>
+              <h4 className="font-semibold text-arcade-purple mb-2">🎯 Personalized Results</h4>
               <ul className="text-sm text-gray-300 space-y-1">
-                <li>• Do you prefer hands-on or theoretical learning?</li>
-                <li>• Do you like working in teams or independently?</li>
-                <li>• What motivates you to learn?</li>
+                <li>• Top 5 course recommendations</li>
+                <li>• Match percentages included</li>
+                <li>• Detailed course information</li>
               </ul>
             </div>
           </div>
