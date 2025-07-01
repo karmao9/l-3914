@@ -33,6 +33,49 @@ interface Course {
   embedding: number[];
 }
 
+// Helper function to make OpenAI API calls with retry logic
+async function makeOpenAIRequest(url: string, body: any, apiKey: string, maxRetries = 3): Promise<any> {
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${apiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(body),
+      });
+
+      if (response.ok) {
+        return await response.json();
+      }
+
+      // Handle rate limit errors specifically
+      if (response.status === 429) {
+        const waitTime = Math.pow(2, attempt) * 1000; // Exponential backoff: 2s, 4s, 8s
+        console.log(`Rate limit hit on attempt ${attempt}. Waiting ${waitTime}ms before retry...`);
+        
+        if (attempt < maxRetries) {
+          await new Promise(resolve => setTimeout(resolve, waitTime));
+          continue;
+        }
+      }
+
+      // For other errors, throw immediately
+      throw new Error(`OpenAI API error: ${response.status} ${response.statusText}`);
+    } catch (error) {
+      if (attempt === maxRetries) {
+        throw error;
+      }
+      
+      // Wait before retrying other errors too
+      const waitTime = Math.pow(2, attempt) * 500; // Shorter wait for other errors
+      console.log(`Request failed on attempt ${attempt}. Retrying in ${waitTime}ms...`);
+      await new Promise(resolve => setTimeout(resolve, waitTime));
+    }
+  }
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -65,27 +108,19 @@ serve(async (req) => {
 
     console.log('Generated descriptive text:', descriptiveText);
 
-    // Step 2: Generate embedding for student response
-    const embeddingResponse = await fetch('https://api.openai.com/v1/embeddings', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${openaiApiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
+    // Step 2: Generate embedding for student response with retry logic
+    console.log('Generating student embedding...');
+    const embeddingData = await makeOpenAIRequest(
+      'https://api.openai.com/v1/embeddings',
+      {
         model: 'text-embedding-3-large',
         input: descriptiveText,
         dimensions: 3072
-      }),
-    });
+      },
+      openaiApiKey
+    );
 
-    if (!embeddingResponse.ok) {
-      throw new Error(`OpenAI API error: ${embeddingResponse.statusText}`);
-    }
-
-    const embeddingData = await embeddingResponse.json();
     const studentEmbedding = embeddingData.data[0].embedding;
-    
     console.log('Generated student embedding, length:', studentEmbedding.length);
 
     // Step 3: Store student response in database
@@ -122,7 +157,7 @@ serve(async (req) => {
 
     console.log(`Found ${courses.length} courses`);
 
-    // Step 5: Generate embeddings for courses that don't have them
+    // Step 5: Generate embeddings for courses that don't have them (with retry logic)
     const coursesWithEmbeddings: Course[] = [];
     
     for (const course of courses) {
@@ -139,34 +174,33 @@ serve(async (req) => {
           Career Prospects: ${course.career_prospects.join(', ')}
         `.trim();
 
-        const courseEmbeddingResponse = await fetch('https://api.openai.com/v1/embeddings', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${openaiApiKey}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            model: 'text-embedding-3-large',
-            input: courseText,
-            dimensions: 3072
-          }),
-        });
+        console.log(`Generating embedding for course: ${course.title}`);
+        
+        try {
+          const courseEmbeddingData = await makeOpenAIRequest(
+            'https://api.openai.com/v1/embeddings',
+            {
+              model: 'text-embedding-3-large',
+              input: courseText,
+              dimensions: 3072
+            },
+            openaiApiKey
+          );
 
-        if (!courseEmbeddingResponse.ok) {
-          console.error(`Error generating embedding for course ${course.id}`);
+          courseEmbedding = courseEmbeddingData.data[0].embedding;
+
+          // Update course with embedding
+          await supabase
+            .from('courses')
+            .update({ embedding: courseEmbedding })
+            .eq('id', course.id);
+
+          console.log(`Generated and saved embedding for course: ${course.title}`);
+        } catch (error) {
+          console.error(`Failed to generate embedding for course ${course.title} after retries:`, error);
+          // Skip this course if we can't generate its embedding
           continue;
         }
-
-        const courseEmbeddingData = await courseEmbeddingResponse.json();
-        courseEmbedding = courseEmbeddingData.data[0].embedding;
-
-        // Update course with embedding
-        await supabase
-          .from('courses')
-          .update({ embedding: courseEmbedding })
-          .eq('id', course.id);
-
-        console.log(`Generated and saved embedding for course: ${course.title}`);
       }
 
       coursesWithEmbeddings.push({
