@@ -1,11 +1,14 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Sparkles } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
+import UserMenu from '@/components/UserMenu';
 import EmailForm from '@/components/EmailForm';
 
 const Index = () => {
   const [loaded, setLoaded] = useState(false);
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -32,6 +35,19 @@ const Index = () => {
             <h1 className="text-xl font-bold gradient-text">InteliCourse</h1>
             <p className="text-xs text-gray-400">Course Recommendation System</p>
           </div>
+        </div>
+        
+        <div className="flex items-center space-x-4">
+          {user ? (
+            <UserMenu />
+          ) : (
+            <button 
+              onClick={() => navigate('/auth')}
+              className="bg-arcade-purple hover:bg-opacity-90 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+            >
+              Sign In
+            </button>
+          )}
         </div>
       </header>
 
