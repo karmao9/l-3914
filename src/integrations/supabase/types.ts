@@ -176,6 +176,21 @@ export type Database = {
         Args: { "": string } | { "": unknown }
         Returns: unknown
       }
+      get_course_recommendations: {
+        Args: {
+          p_student_program: string
+          p_favorite_subjects: string
+          p_career_interests: string
+          p_strengths: string
+        }
+        Returns: {
+          course_id: string
+          title: string
+          university: string
+          field: string
+          match_score: number
+        }[]
+      }
       halfvec_avg: {
         Args: { "": number[] }
         Returns: unknown

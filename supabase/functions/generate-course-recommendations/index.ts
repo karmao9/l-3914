@@ -87,43 +87,11 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    const openaiApiKey = Deno.env.get('OPENAI_API_KEY');
-    if (!openaiApiKey) {
-      throw new Error('OpenAI API key not found');
-    }
-
     const { studentResponses }: { studentResponses: StudentResponse } = await req.json();
     
     console.log('Processing student responses:', studentResponses);
 
-    // Step 1: Concatenate student responses into descriptive text
-    const descriptiveText = `
-      Current Program: ${studentResponses.currentProgram}
-      Favorite Subjects: ${studentResponses.favoriteSubjects}
-      Difficult Subjects: ${studentResponses.difficultSubjects}
-      Strengths: ${studentResponses.strengths}
-      Task Preference: ${studentResponses.taskPreference}
-      Career Interests: ${studentResponses.careerInterests}
-    `.trim();
-
-    console.log('Generated descriptive text:', descriptiveText);
-
-    // Step 2: Generate embedding for student response with retry logic
-    console.log('Generating student embedding...');
-    const embeddingData = await makeOpenAIRequest(
-      'https://api.openai.com/v1/embeddings',
-      {
-        model: 'text-embedding-3-large',
-        input: descriptiveText,
-        dimensions: 3072
-      },
-      openaiApiKey
-    );
-
-    const studentEmbedding = embeddingData.data[0].embedding;
-    console.log('Generated student embedding, length:', studentEmbedding.length);
-
-    // Step 3: Store student response in database
+    // Step 1: Store student response in database
     const { data: savedResponse, error: saveError } = await supabase
       .from('student_responses')
       .insert({
@@ -133,7 +101,7 @@ serve(async (req) => {
         strengths: studentResponses.strengths,
         task_preference: studentResponses.taskPreference,
         career_interests: studentResponses.careerInterests,
-        embedding: studentEmbedding
+        embedding: null // We'll use text-based matching instead
       })
       .select()
       .single();
@@ -145,88 +113,69 @@ serve(async (req) => {
 
     console.log('Saved student response with ID:', savedResponse.id);
 
-    // Step 4: Get all courses that HAVE embeddings (skip those without)
+    // Step 2: Use the database function for smart matching
+    const { data: recommendations, error: recError } = await supabase
+      .rpc('get_course_recommendations', {
+        p_student_program: studentResponses.currentProgram,
+        p_favorite_subjects: studentResponses.favoriteSubjects,
+        p_career_interests: studentResponses.careerInterests,
+        p_strengths: studentResponses.strengths
+      });
+
+    if (recError) {
+      console.error('Error getting recommendations:', recError);
+      throw recError;
+    }
+
+    console.log('Generated recommendations:', recommendations);
+
+    // Step 3: Get full course details for the recommendations
+    const courseIds = recommendations.map((r: any) => r.course_id);
     const { data: courses, error: coursesError } = await supabase
       .from('courses')
       .select('*')
-      .not('embedding', 'is', null);
+      .in('id', courseIds);
 
     if (coursesError) {
-      console.error('Error fetching courses:', coursesError);
+      console.error('Error fetching course details:', coursesError);
       throw coursesError;
     }
 
-    console.log(`Found ${courses.length} courses with embeddings`);
-
-    if (courses.length === 0) {
-      // No courses have embeddings yet - suggest running the embedding generation
-      return new Response(
-        JSON.stringify({ 
-          success: false, 
-          error: 'No courses have embeddings generated yet. Please run the course embedding generation first.' 
-        }),
-        {
-          status: 400,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        }
-      );
-    }
-
-    // Step 5: Calculate cosine similarity between student and each course
-    function cosineSimilarity(vecA: number[], vecB: number[]): number {
-      const dotProduct = vecA.reduce((sum, a, i) => sum + a * vecB[i], 0);
-      const magnitudeA = Math.sqrt(vecA.reduce((sum, a) => sum + a * a, 0));
-      const magnitudeB = Math.sqrt(vecB.reduce((sum, b) => sum + b * b, 0));
-      return dotProduct / (magnitudeA * magnitudeB);
-    }
-
-    const recommendations = courses.map(course => ({
-      course,
-      similarity: cosineSimilarity(studentEmbedding, course.embedding)
-    }));
-
-    // Step 6: Sort by similarity and get top 5
-    const topRecommendations = recommendations
-      .sort((a, b) => b.similarity - a.similarity)
-      .slice(0, 5);
-
-    console.log('Top recommendations:', topRecommendations.map(r => ({
-      title: r.course.title,
-      similarity: r.similarity
-    })));
-
-    // Step 7: Save recommendations to database
-    const recommendationInserts = topRecommendations.map(rec => ({
+    // Step 4: Save recommendations to database
+    const recommendationInserts = recommendations.map((rec: any) => ({
       student_response_id: savedResponse.id,
-      course_id: rec.course.id,
-      similarity_score: rec.similarity
+      course_id: rec.course_id,
+      similarity_score: rec.match_score / 100 // Convert percentage to decimal
     }));
 
-    const { error: recError } = await supabase
+    const { error: saveRecError } = await supabase
       .from('recommendations')
       .insert(recommendationInserts);
 
-    if (recError) {
-      console.error('Error saving recommendations:', recError);
+    if (saveRecError) {
+      console.error('Error saving recommendations:', saveRecError);
     }
 
-    // Step 8: Format and return recommendations
-    const formattedRecommendations = topRecommendations.map(rec => ({
-      id: rec.course.id,
-      title: rec.course.title,
-      university: rec.course.university,
-      field: rec.course.field,
-      matchPercentage: Math.round(rec.similarity * 100),
-      duration: rec.course.duration,
-      location: rec.course.location,
-      description: rec.course.description,
-      keySubjects: rec.course.key_subjects,
-      careerProspects: rec.course.career_prospects,
-      entryRequirements: rec.course.entry_requirements,
-      averageSalary: rec.course.average_salary,
-      employmentRate: rec.course.employment_rate,
-      similarityScore: rec.similarity
-    }));
+    // Step 5: Format and return recommendations
+    const formattedRecommendations = recommendations.map((rec: any) => {
+      const course = courses.find((c: any) => c.id === rec.course_id);
+      return {
+        id: course.id,
+        title: course.title,
+        university: course.university,
+        field: course.field,
+        matchPercentage: rec.match_score,
+        duration: course.duration,
+        location: course.location,
+        description: course.description,
+        keySubjects: course.key_subjects,
+        careerProspects: course.career_prospects,
+        entryRequirements: course.entry_requirements,
+        averageSalary: course.average_salary,
+        employmentRate: course.employment_rate,
+        similarityScore: rec.match_score / 100
+      };
+    });
 
     return new Response(
       JSON.stringify({ 
