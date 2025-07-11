@@ -239,6 +239,7 @@ const Consultation = () => {
                 Contact Support
               </Button>
               <Button 
+                onClick={() => navigate('/meeting-room')}
                 className="bg-arcade-purple hover:bg-arcade-purple/80 text-white"
               >
                 Join Meeting Room

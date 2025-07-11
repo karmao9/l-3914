@@ -12,6 +12,7 @@ import FindCourse from "./pages/FindCourse";
 import GameWorkspace from "./pages/GameWorkspace";
 import Recommendations from "./pages/Recommendations";
 import Consultation from "./pages/Consultation";
+import MeetingRoom from "./pages/MeetingRoom";
 import Auth from "./pages/Auth";
 import Admin from "./pages/Admin";
 import NotFound from "./pages/NotFound";
@@ -46,6 +47,11 @@ const App = () => (
             <Route path="/consultation" element={
               <ProtectedRoute>
                 <Consultation />
+              </ProtectedRoute>
+            } />
+            <Route path="/meeting-room" element={
+              <ProtectedRoute>
+                <MeetingRoom />
               </ProtectedRoute>
             } />
             <Route path="/game-workspace" element={
