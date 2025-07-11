@@ -11,6 +11,7 @@ import CreateGame from "./pages/CreateGame";
 import FindCourse from "./pages/FindCourse";
 import GameWorkspace from "./pages/GameWorkspace";
 import Recommendations from "./pages/Recommendations";
+import Consultation from "./pages/Consultation";
 import Auth from "./pages/Auth";
 import Admin from "./pages/Admin";
 import NotFound from "./pages/NotFound";
@@ -40,6 +41,11 @@ const App = () => (
             <Route path="/recommendations" element={
               <ProtectedRoute>
                 <Recommendations />
+              </ProtectedRoute>
+            } />
+            <Route path="/consultation" element={
+              <ProtectedRoute>
+                <Consultation />
               </ProtectedRoute>
             } />
             <Route path="/game-workspace" element={

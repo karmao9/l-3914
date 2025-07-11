@@ -249,7 +249,10 @@ const Recommendations = () => {
               >
                 Retake Assessment
               </button>
-              <button className="border border-gray-600 text-gray-300 hover:text-white hover:border-gray-400 px-6 py-3 rounded-lg font-medium transition-colors">
+              <button 
+                onClick={() => navigate('/consultation')}
+                className="border border-gray-600 text-gray-300 hover:text-white hover:border-gray-400 px-6 py-3 rounded-lg font-medium transition-colors"
+              >
                 Schedule Consultation
               </button>
             </div>
